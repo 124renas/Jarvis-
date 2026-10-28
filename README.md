@@ -29,9 +29,16 @@ _Screenshots taken in demo mode (no API key)._
 
 What it deliberately does **not** claim: background listening, a wake word while the app is closed, reading device sensors/messages/other apps, or fake system telemetry. The status chips show only real states (network, AI connection, voice support, memory, notification permission).
 
-## No computer? Set it up from your iPhone
+## Two editions
 
-Follow **[docs/DEPLOY-FROM-PHONE.md](docs/DEPLOY-FROM-PHONE.md)**: get a Claude API key, deploy this repo to Railway (one-click via the included `Dockerfile`), and add JARVIS to your Home Screen — all in Safari.
+| | **Free edition** (no computer, no cost) | **Server edition** |
+|---|---|---|
+| AI | Google Gemini free tier (your own key) | Claude (Anthropic API key) |
+| Hosting | GitHub Pages (automatic via `.github/workflows/pages.yml`) | Your server, Railway (`Dockerfile`), or a computer |
+| Data | On the device (IndexedDB) | Server database, synced across devices |
+| Setup guide | **[docs/FREE-SETUP.md](docs/FREE-SETUP.md)** | Below, or [docs/DEPLOY-FROM-PHONE.md](docs/DEPLOY-FROM-PHONE.md) |
+
+Both editions share the same UI; the free edition is built with `npm run build:standalone` and answers the app's API calls on-device (`web/src/local/`).
 
 ## Quick start (local)
 

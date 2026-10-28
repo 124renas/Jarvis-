@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "../components/Icon";
 import { PageHeader, Sheet, Toggle } from "../components/ui";
-import { api, download } from "../lib/api";
+import { api, download, STANDALONE } from "../lib/api";
 import { isIOS, isStandalone } from "../lib/format";
 import { haptic } from "../lib/haptics";
 import { disablePush, enablePush, hasPushSubscription, pushSupportMessage } from "../lib/push";
@@ -31,6 +31,7 @@ export function SettingsView() {
             ))}
           </select>
         </label>
+        {!STANDALONE && (
         <label className="field">
           <span>Reasoning effort</span>
           <select value={settings.effort} onChange={(e) => saveSettings({ effort: e.target.value as Settings["effort"] })}>
@@ -39,6 +40,7 @@ export function SettingsView() {
             <option value="high">High — most thorough</option>
           </select>
         </label>
+        )}
         <label className="field">
           <span>Response style</span>
           <select value={settings.responseStyle} onChange={(e) => saveSettings({ responseStyle: e.target.value as Settings["responseStyle"] })}>
@@ -48,6 +50,7 @@ export function SettingsView() {
           </select>
         </label>
         <Toggle checked={settings.webSearch} onChange={(v) => saveSettings({ webSearch: v })} label="Web search" hint="Let JARVIS search the web for current information, with source links." />
+        {STANDALONE && <GeminiKeyForm />}
         <CustomInstructions />
         {status?.ai === "demo" && (
           <p className="notice">
@@ -79,11 +82,15 @@ export function SettingsView() {
       </Card>
 
       <MemorySettings />
-      <NotificationSettings />
-      <IntegrationSettings />
+      {STANDALONE ? <DeviceDataSettings /> : <NotificationSettings />}
+      {!STANDALONE && <IntegrationSettings />}
 
       <Card title="Privacy & data" icon="download">
-        <p className="small muted">Your data is stored on your JARVIS server and is only visible to your account. AI requests are sent to Anthropic to generate replies.</p>
+        <p className="small muted">
+          {STANDALONE
+            ? "Your data is stored only in this browser on this device. Messages are sent to Google Gemini to generate replies; on the free tier Google may use them to improve its products."
+            : "Your data is stored on your JARVIS server and is only visible to your account. AI requests are sent to Anthropic to generate replies."}
+        </p>
         <div className="button-grid">
           <button type="button" className="btn" onClick={() => download("/api/export/all.json")}>
             <Icon name="download" size={18} /> Export all data (JSON)
@@ -109,17 +116,20 @@ export function SettingsView() {
             type="button"
             className="btn danger ghost"
             onClick={async () => {
-              if (!(await confirm({ title: "Delete your account?", body: "This permanently deletes your account and all data on this server. This cannot be undone.", confirmLabel: "Delete account", danger: true })))
-                return;
+              const ok = STANDALONE
+                ? await confirm({ title: "Erase everything?", body: "All JARVIS data on this device — chats, tasks, notes, memories and your API key — will be deleted. Export first if you want a backup.", confirmLabel: "Erase", danger: true })
+                : await confirm({ title: "Delete your account?", body: "This permanently deletes your account and all data on this server. This cannot be undone.", confirmLabel: "Delete account", danger: true });
+              if (!ok) return;
               await api("/account", { method: "DELETE" });
               setUser(null);
             }}
           >
-            <Icon name="trash" size={18} /> Delete account
+            <Icon name="trash" size={18} /> {STANDALONE ? "Erase all data on this device" : "Delete account"}
           </button>
         </div>
       </Card>
 
+      {!STANDALONE && (
       <Card title="Account" icon="logout">
         <PasswordForm />
         <button
@@ -134,9 +144,11 @@ export function SettingsView() {
           <Icon name="logout" size={18} /> Sign out
         </button>
       </Card>
+      )}
 
       <p className="small muted center">
-        JARVIS AI · {status?.ai === "anthropic" ? "Connected to Claude" : "Demo mode"} · {isStandalone() ? "Installed app" : "Browser"}
+        JARVIS AI · {status?.ai === "anthropic" ? "Connected to Claude" : status?.ai === "gemini" ? "On-device edition · Google Gemini" : "Demo mode"} ·{" "}
+        {isStandalone() ? "Installed app" : "Browser"}
       </p>
     </section>
   );
@@ -190,6 +202,96 @@ function ProfileForm() {
         Save profile
       </button>
     </form>
+  );
+}
+
+function GeminiKeyForm() {
+  const { toast } = useApp();
+  const [info, setInfo] = useState<{ hasKey: boolean; masked: string } | null>(null);
+  const [key, setKey] = useState("");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    api("/local/key").then(setInfo).catch(() => {});
+  }, []);
+  return (
+    <form
+      className="form"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setBusy(true);
+        try {
+          await api("/local/key", { method: "PUT", body: { key } });
+          setKey("");
+          setInfo(await api("/local/key"));
+          toast("Gemini key saved.", "success");
+        } catch (err) {
+          toast((err as Error).message, "error");
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      <label>
+        Gemini API key {info?.hasKey ? <span className="muted">(current: {info.masked})</span> : <span className="muted">(not set)</span>}
+        <input value={key} onChange={(e) => setKey(e.target.value)} placeholder="Paste a new key to replace it" autoComplete="off" autoCapitalize="off" spellCheck={false} />
+      </label>
+      <p className="small muted">
+        Free key:{" "}
+        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">
+          aistudio.google.com/apikey
+        </a>
+        . It's stored only on this device and sent only to Google.
+      </p>
+      {key.trim() && (
+        <button type="submit" className="btn small primary" disabled={busy}>
+          {busy ? "Checking…" : "Save key"}
+        </button>
+      )}
+    </form>
+  );
+}
+
+function DeviceDataSettings() {
+  const { toast, confirm } = useApp();
+  const fileRef = useRef<HTMLInputElement>(null);
+  return (
+    <Card title="Your devices" icon="link">
+      <p className="small muted">
+        This edition keeps data on each device separately. To move everything from your iPhone to your iPad, export a backup here, open it on the other device
+        (AirDrop, iCloud Drive or Files) and import it.
+      </p>
+      <div className="button-grid">
+        <button type="button" className="btn" onClick={() => download("/api/export/all.json")}>
+          <Icon name="download" size={18} /> Export backup
+        </button>
+        <button type="button" className="btn" onClick={() => fileRef.current?.click()}>
+          <Icon name="refresh" size={18} /> Import backup
+        </button>
+      </div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="application/json,.json"
+        hidden
+        onChange={async (e) => {
+          const f = e.target.files?.[0];
+          e.target.value = "";
+          if (!f) return;
+          if (!(await confirm({ title: "Replace data on this device?", body: "Everything on this device is replaced with the backup. Your API key is kept.", confirmLabel: "Import", danger: true }))) return;
+          try {
+            await api("/local/import", { body: JSON.parse(await f.text()) });
+            toast("Backup imported.", "success");
+            setTimeout(() => location.reload(), 600);
+          } catch (err) {
+            toast(err instanceof SyntaxError ? "That file isn't valid JSON." : (err as Error).message, "error");
+          }
+        }}
+      />
+      <p className="small muted">
+        Reminders: tap “Calendar” on a task or “Add to Calendar” on an event to let Apple Calendar remind you. Push reminders, Siri Shortcuts and the calendar
+        feed need the server edition.
+      </p>
+    </Card>
   );
 }
 

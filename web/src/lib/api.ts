@@ -11,9 +11,18 @@ export class ApiError extends Error {
 
 type Json = Record<string, unknown> | unknown[];
 
+/** Built as the free on-device edition (GitHub Pages + Gemini, data in IndexedDB). */
+export const STANDALONE = import.meta.env.VITE_STANDALONE === "1";
+
+async function local(method: string, path: string, body?: unknown) {
+  const { handleLocal } = await import("../local/router");
+  return handleLocal(method, path, body);
+}
+
 const offlineMessage = () => (navigator.onLine ? "Can't reach the JARVIS server." : "You're offline.");
 
 export async function api<T = any>(path: string, opts: { method?: string; body?: Json; signal?: AbortSignal } = {}): Promise<T> {
+  if (STANDALONE) return (await local(opts.method ?? (opts.body ? "POST" : "GET"), path, opts.body)) as T;
   let res: Response;
   try {
     res = await fetch(`/api${path}`, {
@@ -37,6 +46,10 @@ export async function api<T = any>(path: string, opts: { method?: string; body?:
 
 /** POSTs a chat message and delivers Server-Sent Events as they arrive. */
 export async function streamChat(body: Json, onEvent: (e: ChatEvent) => void, signal: AbortSignal) {
+  if (STANDALONE) {
+    const { localChat } = await import("../local/chat");
+    return localChat(body as any, onEvent, signal);
+  }
   let res: Response;
   try {
     res = await fetch("/api/chat", {
@@ -106,11 +119,20 @@ export async function prepareImage(file: File, maxSide = 1568): Promise<{ data: 
   }
 }
 
-export function download(url: string) {
+export async function download(url: string) {
   const a = document.createElement("a");
-  a.href = url;
   a.rel = "noopener";
+  let objectUrl = "";
+  if (STANDALONE && url.startsWith("/api/")) {
+    const result = (await local("GET", url.slice(4))) as { __file: { name: string; type: string; text: string } };
+    objectUrl = URL.createObjectURL(new Blob([result.__file.text], { type: result.__file.type }));
+    a.href = objectUrl;
+    a.download = result.__file.name;
+  } else {
+    a.href = url;
+  }
   document.body.appendChild(a);
   a.click();
   a.remove();
+  if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
 }

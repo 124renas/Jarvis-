@@ -14,7 +14,9 @@
     "test": "npm run test -w server",
     "typecheck": "npm run typecheck -w server && npm run typecheck -w web",
     "e2e": "node scripts/e2e.cjs",
-    "icons": "node scripts/icons.cjs"
+    "icons": "node scripts/icons.cjs",
+    "build:standalone": "npm run build:standalone -w web",
+    "e2e:standalone": "node scripts/e2e-standalone.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.5"

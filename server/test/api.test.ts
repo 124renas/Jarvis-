@@ -6,8 +6,8 @@ import { demoProvider } from "../src/ai/demo.js";
 import { anthropicProvider } from "../src/ai/provider.js";
 import { runChat } from "../src/ai/chat.js";
 import { getSettings } from "../src/settings.js";
-import { buildCalendar } from "../src/lib/ics.js";
-import { parseUserDate } from "../src/lib/time.js";
+import { buildCalendar } from "../../shared/ics.js";
+import { parseUserDate } from "../../shared/time.js";
 
 function setup() {
   const db = openDb(":memory:");

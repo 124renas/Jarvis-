@@ -3,12 +3,13 @@ import { ConversationList } from "./components/ConversationList";
 import { Icon } from "./components/Icon";
 import { Orb } from "./components/Orb";
 import { ConfirmHost, Sheet, Spinner, Toasts } from "./components/ui";
-import { api } from "./lib/api";
+import { api, STANDALONE } from "./lib/api";
 import { haptic } from "./lib/haptics";
 import { AppProvider, applyTheme, useApp } from "./lib/store";
 import type { User, View } from "./lib/types";
 import { AssistantView } from "./views/AssistantView";
 import { AuthView } from "./views/AuthView";
+import { SetupView } from "./views/SetupView";
 import { CalendarView } from "./views/CalendarView";
 import { NotesView } from "./views/NotesView";
 import { SettingsView } from "./views/SettingsView";
@@ -73,7 +74,10 @@ export function App() {
         <Spinner label="Starting JARVIS" />
       </main>
     );
-  if (!session.user) return <AuthView signupAllowed={session.signupAllowed} onSignedIn={(user) => setSession({ user, signupAllowed: session.signupAllowed })} />;
+  if (!session.user) {
+    const onSignedIn = (user: User) => setSession({ user, signupAllowed: session.signupAllowed });
+    return STANDALONE ? <SetupView onSignedIn={onSignedIn} /> : <AuthView signupAllowed={session.signupAllowed} onSignedIn={onSignedIn} />;
+  }
 
   return (
     <AppProvider key={session.user.id} user={session.user} onSignOut={signOut}>

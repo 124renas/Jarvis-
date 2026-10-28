@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Icon } from "../components/Icon";
 import { EmptyState, ErrorState, PageHeader, Sheet, Spinner } from "../components/ui";
-import { api, download } from "../lib/api";
+import { api, download, STANDALONE } from "../lib/api";
 import { fromLocalInput, relativeDue, toLocalInput } from "../lib/format";
 import { haptic } from "../lib/haptics";
 import { useApp, useData } from "../lib/store";
@@ -225,7 +225,7 @@ function TaskSheet({
           Notes
           <textarea rows={3} value={t.notes ?? ""} onChange={(e) => setT({ ...t, notes: e.target.value })} />
         </label>
-        <p className="small muted">With notifications enabled, JARVIS alerts you when a task is due.</p>
+        <p className="small muted">{STANDALONE ? "Tip: tap Calendar to add a due task to Apple Calendar so iOS reminds you." : "With notifications enabled, JARVIS alerts you when a task is due."}</p>
         <div className="row-between">
           <div className="row">
             {t.id && (

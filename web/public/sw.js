@@ -1,8 +1,10 @@
 // JARVIS service worker: offline app shell, cached reads, and push reminders.
-const VERSION = "jarvis-v1";
+const VERSION = "jarvis-v2";
 const SHELL = `${VERSION}-shell`;
 const API_CACHE = "jarvis-api";
-const SHELL_URLS = ["/", "/manifest.webmanifest", "/icons/icon.svg", "/icons/icon-192.png", "/icons/apple-touch-icon.png"];
+// Paths are relative to the service worker's scope ("/" for the server edition, "/<repo>/" on GitHub Pages).
+const SCOPE = new URL(self.registration.scope).pathname;
+const SHELL_URLS = ["", "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png", "icons/apple-touch-icon.png"].map((p) => SCOPE + p);
 // Read-only data cached for offline viewing (per device; cleared on sign-out).
 const CACHEABLE_API = /^\/api\/(conversations(\/\d+)?|tasks|events|notes|settings|status|memories)(\?.*)?$/;
 
@@ -48,10 +50,10 @@ self.addEventListener("fetch", (event) => {
       fetch(req)
         .then((res) => {
           const copy = res.clone();
-          caches.open(SHELL).then((c) => c.put("/", copy));
+          caches.open(SHELL).then((c) => c.put(SCOPE, copy));
           return res;
         })
-        .catch(() => caches.match("/")),
+        .catch(() => caches.match(SCOPE)),
     );
     return;
   }
@@ -62,7 +64,7 @@ self.addEventListener("fetch", (event) => {
       (hit) =>
         hit ||
         fetch(req).then((res) => {
-          if (res.ok && (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/icons/"))) {
+          if (res.ok && (url.pathname.startsWith(SCOPE + "assets/") || url.pathname.startsWith(SCOPE + "icons/"))) {
             const copy = res.clone();
             caches.open(SHELL).then((c) => c.put(req, copy));
           }
@@ -77,7 +79,7 @@ self.addEventListener("message", (event) => {
 });
 
 self.addEventListener("push", (event) => {
-  let data = { title: "JARVIS", body: "", url: "/" };
+  let data = { title: "JARVIS", body: "", url: SCOPE };
   try {
     data = { ...data, ...event.data.json() };
   } catch {
@@ -86,8 +88,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      icon: SCOPE + "icons/icon-192.png",
+      badge: SCOPE + "icons/icon-192.png",
       tag: data.tag,
       data: { url: data.url },
     }),
@@ -96,7 +98,7 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const target = event.notification.data?.url || "/";
+  const target = new URL(event.notification.data?.url || SCOPE, self.registration.scope).href;
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
       for (const w of wins) {

@@ -29,7 +29,7 @@ export interface ModelInfo {
 }
 
 export interface Status {
-  ai: "anthropic" | "demo";
+  ai: "anthropic" | "gemini" | "demo";
   models: ModelInfo[];
   pushDevices: number;
   vapidPublicKey: string;

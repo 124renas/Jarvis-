@@ -4,6 +4,8 @@ import react from "@vitejs/plugin-react";
 const api = process.env.JARVIS_API ?? "http://localhost:8787";
 
 export default defineConfig({
+  // GitHub Pages serves the on-device edition from /<repo>/; the server edition uses "/".
+  base: process.env.BASE_PATH ?? "/",
   plugins: [react()],
   server: {
     host: true,

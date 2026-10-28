@@ -4,7 +4,7 @@ import { now } from "../db.js";
 import type { AuthUser } from "../auth.js";
 import type { Settings } from "../settings.js";
 import { listMemories } from "../lib/store.js";
-import { formatUserTime, safeTimeZone, tzOffset } from "../lib/time.js";
+import { formatUserTime, safeTimeZone, tzOffset } from "../../../shared/time.js";
 import { JARVIS_SYSTEM_PROMPT, userContextBlock } from "./prompt.js";
 import { executeTool, toolDefinitions } from "./tools.js";
 import type { AiProvider, BetaMessageParam } from "./provider.js";

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Icon } from "../components/Icon";
 import { EmptyState, ErrorState, PageHeader, Sheet, Spinner } from "../components/ui";
-import { api, download } from "../lib/api";
+import { api, download, STANDALONE } from "../lib/api";
 import { fmtDay, fmtTime, fromLocalInput, startOfDay, toLocalInput } from "../lib/format";
 import { haptic } from "../lib/haptics";
 import { useApp, useData } from "../lib/store";
@@ -100,7 +100,7 @@ export function CalendarView() {
     <section className="page" aria-label="Calendar">
       <PageHeader
         title="Calendar"
-        subtitle="Your JARVIS calendar · syncs to Apple Calendar via subscription"
+        subtitle={STANDALONE ? "Your JARVIS calendar · send events to Apple Calendar with “Add to Calendar”" : "Your JARVIS calendar · syncs to Apple Calendar via subscription"}
         actions={
           <button type="button" className="btn primary" onClick={() => setEditing({ title: "", start_at: selected + 9 * 3600_000, end_at: selected + 10 * 3600_000 })}>
             <Icon name="plus" size={18} /> Event

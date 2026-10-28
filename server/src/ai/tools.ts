@@ -2,7 +2,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import type { DB } from "../db.js";
 import * as store from "../lib/store.js";
-import { isoInZone, parseUserDate } from "../lib/time.js";
+import { isoInZone, parseUserDate } from "../../../shared/time.js";
 
 type ToolDef = Anthropic.Beta.BetaTool;
 

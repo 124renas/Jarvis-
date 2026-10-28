@@ -1925,3 +1925,10 @@ input[type="range"] {
     transition-duration: 0.001ms !important;
   }
 }
+
+.setup-steps {
+  margin: 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: 4px;
+}

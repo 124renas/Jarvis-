@@ -5,14 +5,10 @@ import { z } from "zod";
 import type { DB } from "../db.js";
 import { describeAiError, type AiProvider } from "../ai/provider.js";
 import { getSettings, type Settings } from "../settings.js";
-import { formatUserTime, isoInZone, parseUserDate, safeTimeZone, tzOffset } from "../lib/time.js";
+import { formatUserTime, isoInZone, parseUserDate, safeTimeZone, tzOffset } from "../../../shared/time.js";
 import { HttpError, parseBody, rateLimit } from "../lib/http.js";
+import { PARSE_SYSTEM, SUMMARY_SYSTEM } from "../../../shared/prompt.js";
 
-const SUMMARY_SYSTEM =
-  "You are JARVIS, a precise assistant. Summarise the user's text faithfully: key points first as a short bullet list, then any action items. Do not add facts that are not in the text. Use Markdown.";
-
-const PARSE_SYSTEM =
-  "You convert a short natural-language request into a structured task or calendar event. Resolve relative dates against the current local time provided. Output ISO 8601 date-times with the user's UTC offset. Use null when something is not specified. Keep the title short and drop filler like 'remind me to'.";
 
 const ParsedSchema = {
   type: "object",

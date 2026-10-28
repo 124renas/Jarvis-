@@ -1,6 +1,26 @@
 // Minimal RFC 5545 calendar generation for Apple Calendar subscriptions and
 // one-off "Add to Calendar" downloads.
-import type { CalendarEvent, Task } from "./store.js";
+interface CalendarEvent {
+  id: number;
+  title: string;
+  start_at: number;
+  end_at: number | null;
+  all_day: boolean;
+  location: string;
+  notes: string;
+  created_at: number;
+}
+
+interface Task {
+  id: number;
+  title: string;
+  notes: string;
+  due_at: number | null;
+  created_at: number;
+}
+
+const encoder = new TextEncoder();
+const bytes = (s: string) => encoder.encode(s).length;
 
 const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
 
@@ -13,9 +33,9 @@ const dateOnly = (ms: number) => new Date(ms).toISOString().slice(0, 10).replace
 function fold(line: string): string {
   const out: string[] = [];
   let rest = line;
-  while (Buffer.byteLength(rest) > 75) {
+  while (bytes(rest) > 75) {
     let cut = 74;
-    while (Buffer.byteLength(rest.slice(0, cut)) > 74) cut--;
+    while (bytes(rest.slice(0, cut)) > 74) cut--;
     out.push(rest.slice(0, cut));
     rest = " " + rest.slice(cut);
   }
