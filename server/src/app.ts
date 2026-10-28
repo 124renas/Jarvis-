@@ -16,7 +16,9 @@ import { feedRoutes, integrationRoutes } from "./routes/integrations.js";
 export function createApp(db: DB, provider: AiProvider) {
   const app = express();
   app.disable("x-powered-by");
-  app.set("trust proxy", process.env.TRUST_PROXY ?? "loopback");
+  // A number means "trust this many proxy hops" (e.g. TRUST_PROXY=1 behind a cloud load balancer).
+  const trustProxy = process.env.TRUST_PROXY ?? "loopback";
+  app.set("trust proxy", /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy);
 
   app.use((_req, res, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");

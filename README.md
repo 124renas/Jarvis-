@@ -29,6 +29,10 @@ _Screenshots taken in demo mode (no API key)._
 
 What it deliberately does **not** claim: background listening, a wake word while the app is closed, reading device sensors/messages/other apps, or fake system telemetry. The status chips show only real states (network, AI connection, voice support, memory, notification permission).
 
+## No computer? Set it up from your iPhone
+
+Follow **[docs/DEPLOY-FROM-PHONE.md](docs/DEPLOY-FROM-PHONE.md)**: get a Claude API key, deploy this repo to Railway (one-click via the included `Dockerfile`), and add JARVIS to your Home Screen — all in Safari.
+
 ## Quick start (local)
 
 Requirements: **Node.js 22.13+** (uses the built-in `node:sqlite`).
