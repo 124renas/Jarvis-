@@ -1,0 +1,25 @@
+{
+  "name": "jarvis-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "JARVIS AI \u2014 a voice-first personal AI assistant PWA for iPhone and iPad",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,web -c cyan,blue \"npm run dev -w server\" \"npm run dev -w web\"",
+    "build": "npm run build -w web",
+    "start": "npm run start -w server",
+    "test": "npm run test -w server",
+    "typecheck": "npm run typecheck -w server && npm run typecheck -w web",
+    "e2e": "node scripts/e2e.cjs",
+    "icons": "node scripts/icons.cjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}
